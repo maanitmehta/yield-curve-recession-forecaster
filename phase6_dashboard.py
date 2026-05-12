@@ -33,7 +33,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import streamlit as st
 from scipy.stats import norm
-from sklearn.metrics import roc_auc_score, brier_score_loss
 import statsmodels.api as sm
 import io
 

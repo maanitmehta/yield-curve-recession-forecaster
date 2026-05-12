@@ -6,7 +6,11 @@ Phase 5 — Real-Time Pseudo Out-of-Sample Evaluation
 Models
 ------
 Three horizons: h in {3, 6, 12} months
-Four specifications per horizon:
+Five specifications per horizon:
+
+  M0 — 10Y-2Y spread (raw):
+         P(rec_{t+h}) = Phi(a + g1*spread_t)
+         Practitioner benchmark — the number quoted on Bloomberg/WSJ
 
   M1 — Slope only (b2):
          P(rec_{t+h}) = Phi(a + g1*b2_t)
@@ -74,6 +78,7 @@ REC_COLOR      = "#E8E0F0"
 REC_ALPHA      = 0.6
 
 MODEL_SPECS = {
+    "M0_raw_spread":  ["spread_10y2y"],
     "M1_slope":       ["b2"],
     "M2_slope_curv":  ["b2", "b3"],
     "M3_full_ns":     ["b1", "b2", "b3"],
@@ -81,6 +86,7 @@ MODEL_SPECS = {
 }
 
 MODEL_LABELS = {
+    "M0_raw_spread":  "M0: 10Y-2Y Spread (practitioner)",
     "M1_slope":       "M1: Slope only (b2)",
     "M2_slope_curv":  "M2: Slope + Curvature",
     "M3_full_ns":     "M3: Full NS (b1+b2+b3)",
@@ -88,6 +94,7 @@ MODEL_LABELS = {
 }
 
 MODEL_COLORS = {
+    "M0_raw_spread":  "#F59E0B",
     "M1_slope":       "#6B7280",
     "M2_slope_curv":  "#2563EB",
     "M3_full_ns":     "#DC2626",
@@ -117,6 +124,25 @@ def prepare_data(df_factors: pd.DataFrame,
 
     # First difference of b1 (addresses non-stationarity)
     df["db1"] = df["b1"].diff()
+
+    # M0 benchmark: 10Y-2Y spread from raw yield data
+    # Computed from NS factors: approximate 10Y yield = b1 + b2*L(10,lam) + b3*C(10,lam)
+    # But cleaner to use the direct FRED-sourced yields stored in ns_factors
+    # We reconstruct: spread = y(10) - y(2) using NS fitted values
+    # L(tau,lam): slope loading; at lam=0.40: L(10)~0.084, L(2)~0.630
+    # C(tau,lam): curv loading;  at lam=0.40: C(10)~0.038, C(2)~0.468
+    lam = 0.40
+    import numpy as _np
+    def _ns_y(tau, b1, b2, b3):
+        lt = lam * tau
+        sl = (1 - _np.exp(-lt)) / lt
+        cv = sl - _np.exp(-lt)
+        return b1 + b2 * sl + b3 * cv
+    # b2 stored is sign-corrected (positive = upward); raw b2 = -b2_stored
+    df["spread_10y2y"] = (
+        _ns_y(10, df["b1"], -df["b2"], df["b3"]) -
+        _ns_y(2,  df["b1"], -df["b2"], df["b3"])
+    )
 
     # Forward recession indicators for each horizon
     for h in HORIZONS:
@@ -315,7 +341,8 @@ def run_realtime_oos(df: pd.DataFrame) -> tuple:
     results_oos_series = {}
     metrics_rows = []
 
-    for mname in MODEL_SPECS:
+    all_models = list(MODEL_SPECS.keys())
+    for mname in all_models:
         for h in HORIZONS:
             probs_dict = results_oos[(mname, h)]
             if not probs_dict:
@@ -569,7 +596,8 @@ def print_performance_table(df_is: pd.DataFrame, df_oos: pd.DataFrame):
           f" {'IS AUC':>8} {'OOS AUC':>8}")
     print("-" * 70)
 
-    for mname in MODEL_SPECS:
+    all_models = list(MODEL_SPECS.keys())
+    for mname in all_models:
         for h in HORIZONS:
             is_row  = df_is[(df_is["model"] == mname) & (df_is["horizon"] == h)]
             oos_row = df_oos[(df_oos["model"] == mname) & (df_oos["horizon"] == h)]

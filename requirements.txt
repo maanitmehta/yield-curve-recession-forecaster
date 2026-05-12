@@ -6,4 +6,4 @@ statsmodels
 matplotlib
 seaborn
 scikit-learn
-streamlitscikit-learn
+streamlit

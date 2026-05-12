@@ -14,16 +14,20 @@ Yield curves contain forward-looking information about the macroeconomy. When sh
 
 ## Live dashboard
 
-```bash
-git clone https://github.com/YOUR_USERNAME/yield-curve-recession-forecaster
-cd yield-curve-recession-forecaster
-bash setup_env.sh
-streamlit run phase6_dashboard.py
-```
+### [→ Open live app](https://yield-curve-recession-forecaster-gcaibtsk4hkx46rt78faes.streamlit.app)
+
+![Dashboard](dashboard.png)
 
 The dashboard fetches live Treasury yields from FRED, fits the NS model in real time, and outputs recession probabilities at three horizons — updated with a single button click.
 
-![Dashboard screenshot showing yield curve fit and recession probability gauges]
+To run locally:
+
+```bash
+git clone https://github.com/maanitmehta/yield-curve-recession-forecaster
+cd yield-curve-recession-forecasting
+bash setup_env.sh
+streamlit run phase6_dashboard.py
+```
 
 ---
 
@@ -176,7 +180,7 @@ yield-curve-recession-forecaster/
 
 ```bash
 # 1. Clone and set up environment
-git clone https://github.com/YOUR_USERNAME/yield-curve-recession-forecaster
+git clone https://github.com/maanitmehta/yield-curve-recession-forecaster
 cd yield-curve-recession-forecaster
 bash setup_env.sh
 source .venv/bin/activate
